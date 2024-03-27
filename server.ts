@@ -162,7 +162,16 @@ app.delete("/api/:collection", async (req, res, next) => {
     rq.catch((err) => res.status(500).send(`Errore esecuzione query: ${err}`));
     rq.finally(() => client.close());
 });
-
+/** 
+ * Chiama il metodo PATCH con l'obbligo di specificare la action da eseguire
+ * 
+ * @remarks
+ * Utilizzando questo metodo il PATCH risulta più flessibile
+ * 
+ * @param id - id del record
+ * @body i valori da aggiornare ad esembio {$inc: {age: 1}
+ * @returns Un JSON di comferma dell'aggiornamento
+*/
 app.patch("/api/:collection/:id", async (req, res, next) => {
     let selectedCollection = req["params"].collection;
     let id = req["params"].id;
@@ -195,6 +204,16 @@ app.patch("/api/:collection", async (req, res, next) => {
     rq.finally(() => client.close());
 });
 
+/** 
+ * Chiama il metodo PUT aggiornando il record invece che sostituirlo
+ * 
+ * @remarks
+ * Utilizzando questo metodo la PUT esegue direttamente il SET del valore ricevuto
+ * 
+ * @param id - id del record
+ * @body i valori da aggiornare
+ * @returns Un JSON di comferma dell'aggiornamento
+*/
 app.put("/api/:collection/:id", async (req, res, next) => {
     let selectedCollection = req["params"].collection;
     let id = req["params"].id;
@@ -204,11 +223,11 @@ app.put("/api/:collection/:id", async (req, res, next) => {
     }else{
         objId = id as unknown as ObjectId
     }
-    let updatedRecord = req["body"];
+    let newRecord = req["body"];
     const client = new MongoClient(connectionString);
     await client.connect();
     let collection = client.db(DBNAME).collection(selectedCollection);
-    let rq = collection.replaceOne({ "_id": objId }, updatedRecord);
+    let rq = collection.updateOne({ "_id": objId }, { "$set": newRecord});
     rq.then((data) => res.send(data));
     rq.catch((err) => res.status(500).send(`Errore esecuzione query: ${err}`));
     rq.finally(() => client.close());
